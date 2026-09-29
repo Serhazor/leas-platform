@@ -7,6 +7,8 @@ import { cache } from "react";
 import { getDb } from "@/db";
 import { adminSessions, adminUsers, type AdminUser } from "@/db/schema";
 import { SESSION_COOKIE, SESSION_DURATION_DAYS } from "./constants";
+import { DEMO_ADMIN_EMAIL, isAdminOpenAccess } from "./demo";
+import { hashPassword } from "./password";
 
 export type CurrentAdmin = Pick<AdminUser, "id" | "email" | "name" | "role">;
 
@@ -36,7 +38,7 @@ export async function createSession(userId: string) {
 /** Returns the signed-in administrator, or null. Memoised per request. */
 export const getCurrentAdmin = cache(async (): Promise<CurrentAdmin | null> => {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
-  if (!token) return null;
+  if (!token) return isAdminOpenAccess() ? getDemoAdmin() : null;
   const db = getDb();
   const rows = await db
     .select({
@@ -58,7 +60,7 @@ export const getCurrentAdmin = cache(async (): Promise<CurrentAdmin | null> => {
     )
     .limit(1);
   const row = rows[0];
-  if (!row) return null;
+  if (!row) return isAdminOpenAccess() ? getDemoAdmin() : null;
   // Touch the session at most every 10 minutes.
   if (Date.now() - row.lastSeenAt.getTime() > 10 * 60_000) {
     await db.update(adminSessions).set({ lastSeenAt: new Date() }).where(eq(adminSessions.id, row.sessionId));
@@ -104,4 +106,32 @@ export async function getClientIpHash(): Promise<string | null> {
   if (!ip) return null;
   const secret = process.env.AUTH_SECRET ?? "";
   return createHash("sha256").update(`${secret}:${ip}`).digest("hex").slice(0, 32);
+}
+
+/** Demo mode: a real (but login-less) account so every foreign key keeps working. */
+async function getDemoAdmin(): Promise<CurrentAdmin> {
+  const db = getDb();
+  const [existing] = await db
+    .select({ id: adminUsers.id, email: adminUsers.email, name: adminUsers.name, role: adminUsers.role })
+    .from(adminUsers)
+    .where(eq(adminUsers.email, DEMO_ADMIN_EMAIL))
+    .limit(1);
+  if (existing) return existing;
+  const [created] = await db
+    .insert(adminUsers)
+    .values({
+      email: DEMO_ADMIN_EMAIL,
+      name: "Démo",
+      role: "admin",
+      // Random unusable password: this account can never log in normally.
+      passwordHash: await hashPassword(generateToken()),
+    })
+    .onConflictDoNothing()
+    .returning({ id: adminUsers.id, email: adminUsers.email, name: adminUsers.name, role: adminUsers.role });
+  if (created) return created;
+  const [again] = await db
+    .select({ id: adminUsers.id, email: adminUsers.email, name: adminUsers.name, role: adminUsers.role })
+    .from(adminUsers)
+    .where(eq(adminUsers.email, DEMO_ADMIN_EMAIL));
+  return again;
 }

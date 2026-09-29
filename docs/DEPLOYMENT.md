@@ -119,3 +119,10 @@ Limits of this demo setup: uploading new images from the admin is disabled (a Fr
 explains it); photos committed in `public/images/` still work. Enable uploads later by adding
 the Supabase Storage variables (or a Cloudinary driver). E-mails are only logged until
 `RESEND_API_KEY` is set.
+
+### Open admin (demo mode)
+
+For the demo, `/admin` is accessible **without logging in** (a banner says so).
+This is controlled by `src/lib/auth/demo.ts`. Before real use, close it by setting
+`ADMIN_OPEN_ACCESS=false` in Vercel (or `DEFAULT_OPEN = false` in that file) and redeploy;
+normal login then applies (`ADMIN_EMAIL` / `ADMIN_PASSWORD` or `npm run admin:create`).

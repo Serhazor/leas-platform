@@ -38,11 +38,13 @@ export function AdminShell({
   userName,
   companyName,
   counts,
+  demoMode = false,
 }: {
   children: ReactNode;
   userName: string;
   companyName: string;
   counts: { bookings: number; enquiries: number };
+  demoMode?: boolean;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -104,12 +106,14 @@ export function AdminShell({
           <UserRound className="h-[1.1rem] w-[1.1rem]" aria-hidden="true" strokeWidth={1.75} />
           <span className="truncate">Mon compte · {userName}</span>
         </Link>
+        {!demoMode && (
         <form action={logout}>
           <button type="submit" className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-[0.93rem] text-ink/80 hover:bg-ink/5">
             <LogOut className="h-[1.1rem] w-[1.1rem]" aria-hidden="true" strokeWidth={1.75} />
             Se déconnecter
           </button>
         </form>
+        )}
       </div>
     </nav>
   );
@@ -150,7 +154,14 @@ export function AdminShell({
           <div className="flex-1">{nav}</div>
         </aside>
         <main id="admin-contenu" tabIndex={-1} className="min-w-0 px-4 py-6 outline-none sm:px-8 sm:py-8 lg:py-10">
-          <div className="mx-auto max-w-6xl">{children}</div>
+          <div className="mx-auto max-w-6xl">
+            {demoMode && (
+              <p className="mb-6 rounded-md border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-sm text-amber-900">
+                Mode démonstration : l&apos;administration est accessible sans connexion.
+              </p>
+            )}
+            {children}
+          </div>
         </main>
       </div>
     </div>

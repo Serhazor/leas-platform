@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { PUBLIC_ADMIN_PATHS, SESSION_COOKIE } from "@/lib/auth/constants";
+import { isAdminOpenAccess } from "@/lib/auth/demo";
 
 /**
  * Optimistic protection of /admin: redirects visitors without a session cookie to the
@@ -7,6 +8,7 @@ import { PUBLIC_ADMIN_PATHS, SESSION_COOKIE } from "@/lib/auth/constants";
  * and in every server action (see requireAdmin()).
  */
 export function proxy(request: NextRequest) {
+  if (isAdminOpenAccess()) return NextResponse.next();
   const { pathname } = request.nextUrl;
   const isPublicAdminPath = PUBLIC_ADMIN_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
   const hasSession = Boolean(request.cookies.get(SESSION_COOKIE)?.value);
