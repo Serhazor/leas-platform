@@ -12,6 +12,7 @@ import { randomBytes } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import { directDatabaseUrl } from "../src/db/env";
 import { adminUsers } from "../src/db/schema";
 import { hashPassword, isPasswordStrongEnough, PASSWORD_RULES } from "../src/lib/auth/password";
 
@@ -35,7 +36,7 @@ async function main() {
     process.exit(1);
   }
 
-  const url = process.env.DATABASE_URL_DIRECT || process.env.DATABASE_URL;
+  const url = directDatabaseUrl();
   if (!url) {
     console.error("✗ DATABASE_URL doit être défini.");
     process.exit(1);
@@ -45,7 +46,9 @@ async function main() {
   try {
     const passwordHash = await hashPassword(password);
     const existing = await db.select().from(adminUsers).where(eq(adminUsers.email, email));
-    if (existing.length) {
+    if (existing.length && process.argv.includes("--if-missing")) {
+      console.log(`✓ Le compte ${email} existe déjà (inchangé).`);
+    } else if (existing.length) {
       await db
         .update(adminUsers)
         .set({ passwordHash, isActive: true, name })

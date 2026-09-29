@@ -98,6 +98,12 @@ class LocalStorage implements StorageDriver {
 
 let driver: StorageDriver | null = null;
 
+/** Whether image uploads are possible in this environment. */
+export function isStorageConfigured(): boolean {
+  const supabase = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  return (supabase && process.env.STORAGE_DRIVER !== "local") || !process.env.VERCEL;
+}
+
 export class StorageNotConfiguredError extends Error {
   constructor() {
     super("Stockage des images non configuré (NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY).");

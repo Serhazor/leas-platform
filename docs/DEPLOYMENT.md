@@ -1,5 +1,7 @@
 # Production deployment (Supabase + Vercel)
 
+> **Quick demo without Supabase?** See [Demo on Vercel only (Neon)](#demo-on-vercel-only-neon) at the end.
+
 Estimated time: 30–45 minutes. Everything below uses free tiers except where noted.
 
 ## 1. Supabase (database + image storage)
@@ -95,3 +97,25 @@ migration for defence in depth.
 - [ ] Relire la politique de confidentialité (prestataires, durées de conservation)
 - [ ] E-mail de test reçu; une réservation de test de bout en bout
 - [ ] Search Console: soumettre `https://www.votre-domaine.fr/sitemap.xml`
+
+## Demo on Vercel only (Neon)
+
+For a demo you don't need a Supabase account: a free Neon Postgres database can be created
+from inside Vercel, and the deployment sets everything up by itself.
+
+1. Vercel → your project → **Storage** → **Create Database** → **Neon (Serverless Postgres)** →
+   free plan, region *Europe (Frankfurt)* → **Connect** to the project (all environments).
+   Vercel adds `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `POSTGRES_URL`… automatically.
+2. **Settings → Environment Variables**, add:
+   - `ADMIN_EMAIL` and `ADMIN_PASSWORD` (≥ 10 characters, a letter and a digit) — the first admin account;
+   - optionally `ADMIN_NAME`, `AUTH_SECRET`, `CRON_SECRET`, `NEXT_PUBLIC_SITE_URL`.
+3. **Deployments → Redeploy** (or push a commit).
+
+During the build, `npm run vercel-build` runs `scripts/vercel-prebuild.ts`: migrations, French
+seed content (idempotent) and creation of the admin account if it doesn't exist yet. Nothing to
+run from your computer.
+
+Limits of this demo setup: uploading new images from the admin is disabled (a French notice
+explains it); photos committed in `public/images/` still work. Enable uploads later by adding
+the Supabase Storage variables (or a Cloudinary driver). E-mails are only logged until
+`RESEND_API_KEY` is set.

@@ -11,6 +11,7 @@ import { and, count, eq, isNull } from "drizzle-orm";
 import { imageSize } from "image-size";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import { directDatabaseUrl } from "../src/db/env";
 import * as schema from "../src/db/schema";
 import {
   seedAvailability,
@@ -24,7 +25,7 @@ import {
 } from "../src/db/seed-data";
 
 async function main() {
-  const url = process.env.DATABASE_URL_DIRECT || process.env.DATABASE_URL;
+  const url = directDatabaseUrl();
   if (!url) {
     console.error("✗ DATABASE_URL doit être défini.");
     process.exit(1);

@@ -1,6 +1,7 @@
 import { config } from "dotenv";
 config({ path: [".env.local", ".env"], quiet: true });
 import { defineConfig } from "drizzle-kit";
+import { directDatabaseUrl } from "./src/db/env";
 
 export default defineConfig({
   schema: "./src/db/schema.ts",
@@ -8,7 +9,7 @@ export default defineConfig({
   dialect: "postgresql",
   dbCredentials: {
     // Use the direct / session connection (port 5432) for migrations.
-    url: process.env.DATABASE_URL_DIRECT || process.env.DATABASE_URL || "",
+    url: directDatabaseUrl() || "",
   },
   strict: true,
 });
